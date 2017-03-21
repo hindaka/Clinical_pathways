@@ -25,7 +25,15 @@
                 <li><a href="sc_cp.php"><i class="fa fa-circle-o"></i> Input CP Sectio Cesarea</a></li>
               </ul>
             </li>
-			<li><a href="rekapcp.php"><i class="fa fa-edit"></i> Rekap Clinical Pathways</a></li>
+      <li class="treeview">
+              <a href="#">
+                <i class="fa fa-edit"></i> <span>Rekap Clinical Pathways</span> <i class="fa fa-angle-left pull-right"></i>
+              </a>
+              <ul class="treeview-menu">
+                <li><a href="rekapcp.php"><i class="fa fa-circle-o"></i>Partus Spontan</a></li>
+                <li><a href="rekap_cp_sc.php"><i class="fa fa-circle-o"></i>Sectio Cesarea</a></li>
+              </ul>
+            </li>
 			<li><a href="../logout.php"><i class="fa fa-lock"></i> Logout</a></li>
           </ul>
         </section>

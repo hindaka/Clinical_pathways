@@ -14,6 +14,15 @@ if ($tipe!='CP')
 	exit;
 }
 include "../inc/koneksi.inc.php";
+if($namauser=='kasir'){
+	$sql = "SELECT a.created_at,a.id_asesmen,rp.nomedrek,rp.nama as 'nama_pasien',dr.id_drcp,p.nama as 'nama_dokter',a.biaya_riil,a.cara_bayar FROM `asesmen` a INNER JOIN ok o ON(o.id_ok=a.id_ok) INNER JOIN registerpasien rp ON(rp.id_pasien= o.id_register) INNER JOIN drclinical dr ON(dr.id_drcp=a.id_drcp) INNER JOIN pegawai p ON(p.id_pegawai= dr.id_pegawai) WHERE a.biaya_riil=0";
+	$data_kasir = mysql_query($sql);
+}elseif($namauser=='jkn'){
+	$sql = "SELECT a.created_at,a.id_asesmen,rp.nomedrek,rp.nama as 'nama_pasien',dr.id_drcp,p.nama as 'nama_dokter',a.biaya_klaim FROM `asesmen` a INNER JOIN ok o ON(o.id_ok=a.id_ok) INNER JOIN registerpasien rp ON(rp.id_pasien= o.id_register) INNER JOIN drclinical dr ON(dr.id_drcp=a.id_drcp) INNER JOIN pegawai p ON(p.id_pegawai= dr.id_pegawai) WHERE a.biaya_klaim=0";
+	$data_jkn = mysql_query($sql);
+}else{
+
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -65,10 +74,125 @@ include "../inc/koneksi.inc.php";
             <li class="active">Sectio Cesarea</li>
           </ol>
         </section>
-
         <!-- Main content -->
         <section class="content">
-          <div class="box">
+				<?php
+				if($namauser=='kasir'){ ?>
+					<!-- Biaya box -->
+					<div class="box">
+						<div class="box-header">
+							<i class="fa fa-user"></i>
+							<h3 class="box-title">Data CP SC</h3>
+						</div><!-- /.box-header -->
+						<!-- display message  -->
+						<?php if(!empty($_SESSION['sukses'])==true){
+							echo '<div class="alert alert-success alert-dismissible fade in" role="alert">
+										<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+											<span aria-hidden="true">&times;</span>
+											<span class="sr-only">Close</span>
+										</button>
+										'.$_SESSION['msg'].'
+									</div>';
+									unset($_SESSION['sukses']);
+									unset($_SESSION['msg']);
+
+						}
+						if(!empty($_SESSION['error'])==true){
+							echo '<div class="alert alert-success alert-dismissible fade in" role="alert">
+										<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+											<span aria-hidden="true">&times;</span>
+											<span class="sr-only">Close</span>
+										</button>
+										'.$_SESSION['msg'].'
+									</div>';
+									unset($_SESSION['error']);
+									unset($_SESSION['msg']);
+						}
+						?>
+						<!-- end display message -->
+						<div class="box-body">
+							<div class="table-responsive">
+								<table id="example1" class="table table-bordered table-striped">
+									<thead>
+										<tr>
+											<th>no</th>
+											<th>Tanggal Post</th>
+											<th>Pasien</th>
+											<th>Dokter</th>
+											<th>Cara pembayaran</th>
+											<th>Biaya Riil</th>
+											<th>aksi</th>
+										</tr>
+									</thead>
+									<tbody>
+										<?php
+										if(mysql_num_rows($data_kasir)>0){
+											$urutan = 0;
+											while($kasir = mysql_fetch_array($data_kasir)){
+												$f_date = date('d-M-Y',strtotime($kasir['created_at']));
+											echo "<tr>
+														<td>".++$urutan."</td>
+														<td>".$f_date."</td>
+														<td>".$kasir['nama_pasien']."</td>
+														<td>".$kasir['nama_dokter']."</td>
+														<td>".$kasir['cara_bayar']."</td>
+														<td>Rp ".number_format($kasir['biaya_riil'],2,',','.')."</td>
+														<td><a href='sc_sectio_ksr.php?f=".$kasir['id_asesmen']."&n=".$kasir['nomedrek']."' class='btn btn-sm btn-primary'><i class='fa fa-pencil'></i> Detail</a></td>
+													</tr>";
+											}
+										}
+										?>
+									</tbody>
+								</table>
+							</div>
+						</div>
+				</div>
+					<!-- end biaya box -->
+				<?php }elseif($namauser=='jkn'){ ?>
+					<!-- Biaya box -->
+					<div class="box">
+						<div class="box-header">
+							<i class="fa fa-user"></i>
+							<h3 class="box-title">Data CP SC</h3>
+						</div><!-- /.box-header -->
+						<div class="box-body">
+							<div class="table-responsive">
+								<table id="example1" class="table table-bordered table-striped">
+									<thead>
+										<tr>
+											<th>no</th>
+											<th>Tanggal Post</th>
+											<th>Pasien</th>
+											<th>Dokter</th>
+											<th>Biaya Klaim</th>
+											<th>aksi</th>
+										</tr>
+									</thead>
+									<tbody>
+										<?php
+										if(mysql_num_rows($data_jkn)>0){
+											$urutan = 0;
+											while($jkn = mysql_fetch_array($data_jkn)){
+												$f_date = date('d-M-Y',strtotime($jkn['created_at']));
+											echo "<tr>
+														<td>".++$urutan."</td>
+														<td>".$f_date."</td>
+														<td>".$jkn['nama_pasien']."</td>
+														<td>".$jkn['nama_dokter']."</td>
+														<td>Rp ".number_format($jkn['biaya_klaim'],2,',','.')."</td>
+														<td><a href='sc_sectio_jkn.php?f=".$jkn['id_asesmen']."&n=".$jkn['nomedrek']."' class='btn btn-sm btn-primary'><i class='fa fa-pencil'></i> Detail</a></td>
+													</tr>";
+											}
+										}
+										?>
+									</tbody>
+								</table>
+							</div>
+						</div>
+				</div>
+					<!-- end biaya box -->
+				<?php }else{ ?>
+					<div class="box">
                 <div class="box-header">
                   <i class="fa fa-user"></i>
 				  <h3 class="box-title">Input No. RM</h3>
@@ -87,6 +211,7 @@ include "../inc/koneksi.inc.php";
                   </div>
 				</form>
 			  </div>
+				<?php } ?>
         </section><!-- /.content -->
       </div><!-- /.content-wrapper -->
       <!-- static footer -->
@@ -113,6 +238,17 @@ include "../inc/koneksi.inc.php";
     <script src="../dist/js/app.min.js" type="text/javascript"></script>
     <!-- page script -->
     <script type="text/javascript">
+		$(function () {
+			$("#example1").dataTable();
+			$('#example2').dataTable({
+				"bPaginate": true,
+				"bLengthChange": false,
+				"bFilter": false,
+				"bSort": true,
+				"bInfo": true,
+				"bAutoWidth": false
+			});
+		});
       //Flat red color scheme for iCheck
       $('input[type="checkbox"].flat-blue').iCheck({
         checkboxClass: 'icheckbox_flat-blue'

@@ -15,7 +15,7 @@ $menu_header = isset($_POST['menu']) ? $_POST['menu'] : '';
 $id_form = isset($_POST['id_form']) ? $_POST['id_form'] : '';
 
 //get nilai urutan terakhir
-$sql_urutan = "SELECT MAX(urutan) as nilai FROM form_detail_cp";
+$sql_urutan = "SELECT MAX(urutan) as nilai FROM form_detail_cp WHERE id_form='$id_form'";
 $get_urutan = mysql_query($sql_urutan);
 $result_urutan = mysql_fetch_array($get_urutan);
 $urutan = $result_urutan['nilai']+1;

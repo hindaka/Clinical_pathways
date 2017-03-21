@@ -14,18 +14,40 @@ if ($tipe!='CP')
 	exit;
 }
 include "../inc/koneksi.inc.php";
+$id_asesmen = isset($_GET['i']) ? $_GET['i'] : '';
 // query register pasien
-$nomedrek = isset($_POST['nomedrek']) ? $_POST['nomedrek'] : '';
-$sql_pasien ="SELECT o.id_ok,rp.nomedrek,rp.nama,rp.rujukan,rp.tanggallahir,rp.kelamin,o.bb,o.tinggi FROM registerpasien rp INNER JOIN ok o ON(rp.id_pasien=o.id_register) WHERE rp.nomedrek='$nomedrek' LIMIT 1";
+$sql_pasien ="SELECT a.id_asesmen,a.rencana_rawat,rp.nomedrek,rp.nama as nama_pasien,rp.rujukan,rp.tanggallahir,rp.kelamin,o.bb,o.tinggi,a.id_drcp,a.penolong,a.diagnosaM,a.kodeICD_masuk,a.diagnosaU,a.kodeICD_utama,a.diagnosaP,a.kodeICD_penyerta,a.nama_diagnosa,a.diagnosaT,a.kodeICD_tambahan,a.komplikasi,a.kodeICD_komplikasi,a.tindakan,a.kodeICD_tindakan,a.ruang_rawat,a.kelas,a.tanggal_masuk,a.tanggal_keluar,a.lama_rawat FROM `asesmen` a INNER JOIN ok o ON(a.id_ok=o.id_ok) INNER JOIN registerpasien rp ON(o.id_register=rp.id_pasien) INNER JOIN drclinical dr ON(a.id_drcp=dr.id_drcp) INNER JOIN pegawai p ON(p.id_pegawai=dr.id_pegawai)";
 $get_pasien = mysql_query($sql_pasien);
 $pasien = mysql_fetch_array($get_pasien);
+$f_masuk = date('d/m/Y',strtotime($pasien['tanggal_masuk']));
+$f_keluar = date('d/m/Y',strtotime($pasien['tanggal_keluar']));
+
 // query dokter
 $sql_dokter ="SELECT * FROM drclinical d INNER JOIN pegawai p ON(d.id_pegawai=p.id_pegawai)  WHERE d.cp_tipe='SC' ORDER BY p.nama";
 $state_dokter = mysql_query($sql_dokter);
+
 // query asesment form type
 $sql_form = "SELECT * FROM form_input_cp fi INNER JOIN form_detail_cp fd ON(fi.id_form=fd.id_form) INNER JOIN penilaian p ON(fd.id_penilaian=p.id_penilaian) WHERE fi.cp_tipe='SC' and fi.status='aktif' ORDER BY fd.urutan";
 $state_form = mysql_query($sql_form);
 $title = mysql_fetch_array($state_form);
+//query asesmen check
+$groups = array();
+$sql_asesmen = "SELECT * FROM asesmen a INNER JOIN detail_asesmen da ON(a.id_asesmen=da.id_asesmen) WHERE a.id_asesmen=$id_asesmen";
+$ases_state = mysql_query($sql_asesmen);
+while($ases = mysql_fetch_assoc($ases_state)){
+  $key = $ases['id_detail_form'];
+  if (!isset($groups[$key])) {
+      $groups[$key] = array(
+          'h1' => $ases['h1'],
+          'h2' => $ases['h2'],
+          'h3' => $ases['h3'],
+          'h4' => $ases['h4'],
+          'h5' => $ases['h5'],
+          'h6' => $ases['h6'],
+          'h7' => $ases['h7'],
+      );
+  }
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -97,16 +119,16 @@ $title = mysql_fetch_array($state_form);
                     <!-- row 1 -->
                     <tr>
                       <td>No Rekam Medis</td>
-                      <td colspan="3"><?php echo $nomedrek; ?></td>
+                      <td colspan="3"><?php echo $pasien['nomedrek']; ?></td>
                       <td colspan="2">Rujukan</td>
                       <td colspan="3"><?php echo $pasien['rujukan']; ?></td>
                     </tr>
                     <!-- row 2 -->
                     <tr>
                       <td>Nama Pasien</td>
-                      <td colspan="3"><?php echo $pasien['nama']; ?></td>
+                      <td colspan="3"><?php echo $pasien['nama_pasien']; ?></td>
                       <td colspan="2">Rencana Rawat</td>
-                      <td colspan="3"><input type="number" name="rencana_rawat" placeholder=".......... hari" min="1" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="number" name="rencana_rawat" placeholder=".......... hari" min="1" class="form-control" value="<?php echo $pasien['rencana_rawat'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                     <!-- row 3 -->
                     <tr>
@@ -130,55 +152,60 @@ $title = mysql_fetch_array($state_form);
                           <option value="">------Pilih Dokter------</option>
                           <?php
                           while ($list_dokter=mysql_fetch_assoc($state_dokter)) {
-                            echo "<option value=".$list_dokter['id_drcp'].">".$list_dokter['nama']."</option>";
+                            if($list_dokter['id_drcp']==$pasien['id_drcp']){
+                                echo "<option value=".$list_dokter['id_drcp']." selected>".$list_dokter['nama']."</option>";
+                            }else{
+                                echo "<option value=".$list_dokter['id_drcp'].">".$list_dokter['nama']."</option>";
+                            }
+
                           }
                           ?>
                         </select>
                       </td>
                       <td colspan="2">Penolong</td>
-                      <td colspan="3"><input type="text" name="penolong" placeholder="Nama Penolong" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="penolong" placeholder="Nama Penolong" class="form-control" value="<?php echo $pasien['penolong']; ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                     <!-- row 6 -->
                     <tr>
                       <td>Diagnosa Masuk</td>
-                      <td colspan="3"><input type="text" name="diagnosaM" placeholder="Masukan Diagnosa Masuk" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="diagnosaM" placeholder="Masukan Diagnosa Masuk" class="form-control" value="<?php echo $pasien['diagnosaM'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                       <td colspan="2">Kode ICD</td>
-                      <td colspan="3"><input type="text" name="kodeICD_masuk" placeholder="Masukan Kode ICD" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="kodeICD_masuk" placeholder="Masukan Kode ICD" class="form-control" value="<?php echo $pasien['kodeICD_masuk'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                     <!-- row 7 -->
                     <tr>
                       <td>Diagnosa Utama</td>
-                      <td colspan="3"><input type="text" name="diagnosaU" placeholder="Masukan Diagnosa Utama" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="diagnosaU" placeholder="Masukan Diagnosa Utama" class="form-control" value="<?php echo $pasien['diagnosaU'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                       <td colspan="2">Kode ICD</td>
-                      <td colspan="3"><input type="text" name="kodeICD_utama" placeholder="Masukan Kode ICD" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="kodeICD_utama" placeholder="Masukan Kode ICD" class="form-control" value="<?php echo $pasien['kodeICD_utama'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                     <!-- row 8 -->
                     <tr>
                       <td>Diagnosa Penyerta</td>
-                      <td colspan="3"><input type="text" name="diagnosaP" placeholder="Masukan Diagnosa Penyerta" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="diagnosaP" placeholder="Masukan Diagnosa Penyerta" class="form-control" value="<?php echo $pasien['diagnosaP'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                       <td colspan="2">Kode ICD</td>
-                      <td colspan="3"><input type="text" name="kodeICD_penyerta" placeholder="Masukan Kode ICD" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="kodeICD_penyerta" placeholder="Masukan Kode ICD" class="form-control" value="<?php echo $pasien['kodeICD_penyerta'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                     <!-- row 9 -->
                     <tr>
-                      <td ><input type="text" name="nama_diagnosa" placeholder="Masukan Diagnosa Tambahan" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
-                      <td colspan="3"><input type="text" name="diagnosaT" placeholder="Masukan Diagnosa Tambahan" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td ><input type="text" name="nama_diagnosa" placeholder="Masukan Diagnosa Tambahan" class="form-control" value="<?php echo $pasien['nama_diagnosa'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="diagnosaT" placeholder="Masukan Diagnosa Tambahan" class="form-control" value="<?php echo $pasien['diagnosaT'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                       <td colspan="2">Kode ICD</td>
-                      <td colspan="3"><input type="text" name="kodeICD_tambahan" placeholder="masukan kode ICD" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="kodeICD_tambahan" placeholder="masukan kode ICD" class="form-control" value="<?php echo $pasien['kodeICD_tambahan'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                     <!-- row 10 -->
                     <tr>
                       <td>Komplikasi</td>
-                      <td colspan="3"><input type="text" name="komplikasi" placeholder="Masukan Komplikasi" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="komplikasi" placeholder="Masukan Komplikasi" class="form-control" value="<?php echo $pasien['komplikasi'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                       <td colspan="2">Kode ICD</td>
-                      <td colspan="3"><input type="text" name="kodeICD_komplikasi" placeholder="Masukan Kode ICD" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="kodeICD_komplikasi" placeholder="Masukan Kode ICD" class="form-control" value="<?php echo $pasien['diagnosaM'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                     <!-- row 11 -->
                     <tr>
                       <td>Tindakan</td>
-                      <td colspan="3"><input type="text" name="tindakan" placeholder="Masukan tindakan" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="tindakan" placeholder="Masukan tindakan" class="form-control" value="<?php echo $pasien['tindakan'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                       <td colspan="2">Kode ICD</td>
-                      <td colspan="3"><input type="text" name="kodeICD_tindakan" placeholder="Masukan Kode ICD" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="3"><input type="text" name="kodeICD_tindakan" placeholder="Masukan Kode ICD" class="form-control" value="<?php echo $pasien['kodeICD_tindakan'] ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
                     </tr>
                      <!-- row 12 -->
                     <tr>
@@ -186,8 +213,15 @@ $title = mysql_fetch_array($state_form);
 												Ruang Rawat :&nbsp;
 												<select name="ruang_rawat" required>
 													<option value="">Pilih Ruang Rawat</option>
-													<option value="irna3">Irna 3</option>
-													<option value="irna4">Irna 4</option>
+                          <?php
+                            if($pasien['ruang_rawat']=='irna3'){
+                                echo "<option value='irna3' selected>Irna 3</option>
+      													      <option value='irna4'>Irna 4</option>";
+                            }else{
+                                echo "<option value='irna3'>Irna 3</option>
+      													      <option value='irna4' selected>Irna 4</option>";
+                            }
+                          ?>
 												</select>
 											</td>
                       <td>Kelas : </td>
@@ -203,15 +237,27 @@ $title = mysql_fetch_array($state_form);
                       <td>
                         <select name="kelas" class="form-control" <?php if(($namauser=='kasir')||($namauser=='jkn')){ echo 'disabled';} else{ echo 'required';} ?>>
                           <option value="">Kelas</option>
-                          <option value="1">1</option>
-                          <option value="2">2</option>
-                          <option value="3">3</option>
+                          <?php
+                          if($pasien['kelas']==1){
+                            echo "<option value=1 selected>1</option>
+                                  <option value=2>2</option>
+                                  <option value=3>3</option>";
+                          }elseif($pasien['kelas']==2){
+                            echo "<option value=1>1</option>
+                                  <option value=2 selected>2</option>
+                                  <option value=3>3</option>";
+                          }else{
+                            echo "<option value=1>1</option>
+                                  <option value=2>2</option>
+                                  <option value=3 selected>3</option>";
+                          }
+                          ?>
                         </select>
                       </td>
                       <td><input type="number" name="tarifHarian" placeholder="Tarif / Hari" min="0" class="form-control" <?php if($namauser!='kasir'){ echo "disabled";} ?>></td>
-                      <td colspan="2"><input type="text" id="tanggal_masuk" name="tanggal_masuk" placeholder="dd/mm/yyyy" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
-                      <td colspan="2"><input type="text" id="tanggal_keluar" name="tanggal_keluar" placeholder="dd/mm/yyyy" class="form-control" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
-                      <td><input type="text" name="lama_rawat" placeholder="....." id="lama_rawat" readonly class="form-control"> Hari</td>
+                      <td colspan="2"><input type="text" id="tanggal_masuk" name="tanggal_masuk" placeholder="dd/mm/yyyy" class="form-control" value="<?php echo $f_masuk ?>"  <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td colspan="2"><input type="text" id="tanggal_keluar" name="tanggal_keluar" placeholder="dd/mm/yyyy" class="form-control" value="<?php echo $f_keluar ?>" <?php if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';} ?>></td>
+                      <td><input type="text" name="lama_rawat" placeholder="....." id="lama_rawat" readonly class="form-control" value="<?php echo $pasien['lama_rawat'] ?>"> Hari</td>
                     </tr>
                     <!-- row 14 -->
                     <tr>
@@ -236,19 +282,29 @@ $title = mysql_fetch_array($state_form);
 														</tr>";
 												$num=0;
 											}else{
+                        $id_detail = $list_asses['id_detail_form'];
 												echo "<tr>
 																<td>".++$num.". ".$list_asses['nama_penilaian']."</td>";
 																for ($i=1; $i <= 7 ; $i++) {
 																	if($list_asses['h'.$i]=='r'){
 																		echo "<td class=\"red\">".$list_asses['id_detail_form']."/".$i."<input type=\"checkbox\" class=\"form-control\" name=\"nilai[]\" value=".$list_asses['id_detail_form']."/".$i." ";
+                                    if($groups[$id_detail]['h'.$i]=='y'){
+                                      echo "checked ";
+                                    }
 																		if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';}
 																		echo "></td>";
 																	}elseif($list_asses['h'.$i]=='y'){
 																		echo "<td class=\"yellow\">".$list_asses['id_detail_form']."/".$i."<input type=\"checkbox\" class=\"form-control\" name=\"nilai[]\" value=".$list_asses['id_detail_form']."/".$i." ";
+                                    if($groups[$id_detail]['h'.$i]=='y'){
+                                      echo "checked ";
+                                    }
 																		if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';}
 																		echo "></td>";
 																	}else{
 																		echo "<td>".$list_asses['id_detail_form']."/".$i."<input type=\"checkbox\" class=\"form-control\" name=\"nilai[]\" value=".$list_asses['id_detail_form']."/".$i." ";
+                                    if($groups[$id_detail]['h'.$i]=='y'){
+                                      echo "checked ";
+                                    }
 																		if($namauser=='kasir' || $namauser=='jkn'){ echo 'disabled';}
 																		echo "></td>";
 																	}
@@ -267,13 +323,6 @@ $title = mysql_fetch_array($state_form);
                 </div>
 
             </div><!-- /.box-body -->
-						<?php if(($namauser!='kasir') && ($namauser!='jkn')){ ?>
-							<div class="box-footer">
-		              <button type="submit" class="btn btn-success">Simpan</button>
-		          </div>
-						<?php	} ?>
-
-
         </form>
 			  </div>
 				<?php if($namauser=='kasir'){ ?>

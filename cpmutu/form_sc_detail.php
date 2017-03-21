@@ -20,11 +20,15 @@ $id_form = isset($_GET['f']) ? $_GET['f'] : '';
 $get_data_form = "SELECT * FROM form_input_cp WHERE id_form=$id_form LIMIT 1";
 $result = mysql_query($get_data_form);
 $desc = mysql_fetch_array($result);
+//get max urutan
+$sql_urutan = "SELECT MAX(urutan) as total FROM form_detail_cp WHERE id_form=$id_form";
+$get_data_urutan = mysql_query($sql_urutan);
+$total = mysql_fetch_array($get_data_urutan);
 //get data detail form
 $detail_sql = "SELECT * FROM form_detail_cp fd INNER JOIN form_input_cp fi ON(fd.id_form=fi.id_form) INNER JOIN penilaian p ON(p.id_penilaian=fd.id_penilaian) WHERE fi.id_form=$id_form ORDER BY fd.urutan ASC";
 $get_detail = mysql_query($detail_sql);
 //get data
-$get_penilaian = "SELECT * FROM penilaian ORDER BY id_penilaian";
+$get_penilaian = "SELECT * FROM penilaian ORDER BY nama_penilaian ASC";
 $data_penilaian = mysql_query($get_penilaian);
 
 ?>
@@ -106,9 +110,9 @@ $data_penilaian = mysql_query($get_penilaian);
                   <div class="row">
                     <div class="col-xs-3">
                       <div class="form-group">
-                        <label for="pertanyaan">Pertanyaan</label>
+                        <label for="pertanyaan">Indikator <span style="color:red;">*</span></label>
                         <select class="form-control" name="pemeriksaan" required>
-                          <option value="">---pilih pemeriksaan---</option>
+                          <option value="">---pilih Indikator---</option>
                           <?php
                             while($data_p = mysql_fetch_array($data_penilaian)){
                               echo "<option value='".$data_p['id_penilaian']."'>".$data_p['nama_penilaian']."</option>";
@@ -117,7 +121,7 @@ $data_penilaian = mysql_query($get_penilaian);
                         </select>
                       </div>
                       <div class="form-group">
-                        <label for="pertanyaan">Header/sub header</label>
+                        <label for="pertanyaan">Header/sub header <span style="color:red;">*</span></label>
                         <select class="form-control" name="menu" id="head_menu" required>
                           <option value="">---pilih Salah Satu---</option>
                           <option value="y">ya</option>
@@ -337,7 +341,7 @@ $data_penilaian = mysql_query($get_penilaian);
                     <thead>
                       <tr>
                         <th>No</th>
-                        <th>Pertanyaan</th>
+                        <th>Indikator</th>
                         <th>h1</th>
                         <th>h2</th>
                         <th>h3</th>
@@ -415,10 +419,12 @@ $data_penilaian = mysql_query($get_penilaian);
 															echo "<td>
 																			<a href='form_sc_detail_up.php?f=".$d['id_form']."&d=".$d['id_detail_form']."' class='btn btn-warning btn-sm'><i class='fa fa-pencil'></i> Ubah</a></td>";
 																		if($d['urutan']=='1'){
-																			echo "<td><a href='#' class='btn btn-info btn-sm'><i class='fa fa-arrow-down'></i> Turun</a>";
+																			echo "<td><a href='form_sc_detail_order.php?f=".$d['id_form']."&d=".$d['id_detail_form']."&o=down&u=".$d['urutan']."' class='btn btn-info btn-sm'><i class='fa fa-arrow-down'></i> Turun</a>";
+																		}elseif($d['urutan'] == $total['total']){
+																			echo "<td><a href='form_sc_detail_order.php?f=".$d['id_form']."&d=".$d['id_detail_form']."&o=up&u=".$d['urutan']."' class='btn btn-success btn-sm'><i class='fa fa-arrow-up'></i> Naik</a>";
 																		}else{
-																			echo "<td><a href='#' class='btn btn-success btn-sm'><i class='fa fa-arrow-up'></i> Naik</a>&nbsp;
-																					  <a href='#' class='btn btn-info btn-sm'><i class='fa fa-arrow-down'></i> Turun</a>";
+																			echo "<td><a href='form_sc_detail_order.php?f=".$d['id_form']."&d=".$d['id_detail_form']."&o=up&u=".$d['urutan']."' class='btn btn-success btn-sm'><i class='fa fa-arrow-up'></i> Naik</a>&nbsp;
+																					  <a href='form_sc_detail_order.php?f=".$d['id_form']."&d=".$d['id_detail_form']."&o=down&u=".$d['urutan']."' class='btn btn-info btn-sm'><i class='fa fa-arrow-down'></i> Turun</a>";
 																		}
 
 															echo "</td>

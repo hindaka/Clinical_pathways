@@ -16,7 +16,7 @@
           <!-- sidebar menu: : style can be found in sidebar.less -->
           <ul class="sidebar-menu">
             <li class="header">MAIN NAVIGATION</li>
-            <li><a href="list_periksa.php"><i class="fa fa-gear"></i> Daftar Pemeriksaan</a></li>
+            <li><a href="list_periksa.php"><i class="fa fa-gear"></i> Daftar Indikator</a></li>
             <li class="treeview">
              <a href="#">
                <i class="fa fa-edit"></i> <span>Form Penilaian</span> <i class="fa fa-angle-left pull-right"></i>

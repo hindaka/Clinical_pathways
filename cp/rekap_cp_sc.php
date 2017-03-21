@@ -1,11 +1,10 @@
 <?php
-ob_start();
 session_start();
 include("../inc/cek.php");
 $namauser = $_SESSION['namauser'];
 $password = $_SESSION['password'];
 $tipe = $_SESSION['tipe'];
-if ($tipe!='Mutu')
+if ($tipe!='CP')
 {
 	session_start();
 	unset($_SESSION['tipe']);
@@ -15,9 +14,10 @@ if ($tipe!='Mutu')
 	exit;
 }
 include "../inc/koneksi.inc.php";
-//mysql data
-$get_data_form = "SELECT * FROM penilaian ORDER BY nama_penilaian";
-$result = mysql_query($get_data_form);
+//data user
+$mem_id=$_SESSION['id_user'];
+$sql_cp = "SELECT a.id_asesmen,rp.nomedrek,rp.nama as nama_pasien,p.nama as nama_dokter,a.diagnosaU,a.biaya_klaim FROM asesmen a INNER JOIN form_input_cp fi ON(a.id_form=fi.id_form) INNER JOIN drclinical dr ON(dr.id_drcp=a.id_drcp) INNER JOIN pegawai p ON(dr.id_pegawai=p.id_pegawai) INNER JOIN ok o ON(a.id_ok=o.id_ok) INNER JOIN registerpasien rp ON(rp.id_pasien=o.id_register) WHERE a.mem_id=$mem_id";
+$get_data = mysql_query($sql_cp);
 ?>
 <!DOCTYPE html>
 <html>
@@ -63,109 +63,60 @@ $result = mysql_query($get_data_form);
 	    <!-- end pesan -->
         <section class="content-header">
           <h1>
-            Pengaturan
-            <small>Daftar Indikator</small>
+            Rekap
+            <small>CP Sectio Cesarea</small>
           </h1>
           <ol class="breadcrumb">
             <li><a href="index.php"><i class="fa fa-dashboard"></i> Home</a></li>
-            <li class="active">Pengaturan Daftar Indikator</li>
+            <li class="active">Rekap CP Sectio Cesarea</li>
           </ol>
         </section>
 
         <!-- Main content -->
         <section class="content">
-          <!-- form tambah -->
-          <div id="new_form" class="row">
-            <form action="list_periksa_create.php" method="post">
-            <div class="col-xs-12">
-              <div class="box box-primary">
-                <div class="box-header">
-                  <i class="fa fa-envelope"></i>
-                  <h3 class="box-title">Tambah Data Indikator</h3>
-                </div>
-                <div class="box-body">
-                  <div class="form-group">
-                    <label for="nama_form">Indikator</label>
-                    <input type="text" class="form-control" id="nama_periksa" name="nama_periksa" placeholder="contoh : Asesmen Awal Medis Rawat Inap" required autofocus>
-                  </div>
-                </div>
-                <div class="box-footer">
-                  <button type="submit" name="simpan" class="btn btn-success"><i class="fa fa-save"></i> Simpan</button>
-                  <!-- <button id="close_form" type="button" name="simpan" class="btn btn-danger"><i class="fa fa-close"></i> Batal</button> -->
-                </div>
-              </div>
-            </div>
-            </form>
-          </div>
-          <!-- end form tambah -->
           <div class="row">
             <div class="col-xs-12">
               <div class="box box-primary">
                 <div class="box-header">
                   <i class="fa fa-envelope"></i>
-				              <h3 class="box-title">Daftar Data Indikator</h3>
+				  <h3 class="box-title">Data CP</h3>
                 </div><!-- /.box-header -->
-                <!-- display message  -->
-                <?php if(!empty($_SESSION['sukses'])==true){
-            			echo '<div class="alert alert-success alert-dismissible fade in" role="alert">
-            						<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            							<span aria-hidden="true">&times;</span>
-            							<span class="sr-only">Close</span>
-            						</button>
-            						'.$_SESSION['msg'].'
-            					</div>';
-            					unset($_SESSION['sukses']);
-            					unset($_SESSION['msg']);
-
-            		}
-                if(!empty($_SESSION['error'])==true){
-            			echo '<div class="alert alert-success alert-dismissible fade in" role="alert">
-            						<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            							<span aria-hidden="true">&times;</span>
-            							<span class="sr-only">Close</span>
-            						</button>
-            						'.$_SESSION['msg'].'
-            					</div>';
-            					unset($_SESSION['error']);
-            					unset($_SESSION['msg']);
-
-            		}
-
-            		?>
-                <!-- end display message -->
                 <div class="box-body">
                   <table id="example1" class="table table-bordered table-striped">
                     <thead>
                       <tr>
-                        <th>No</th>
-                        <th>Indikator</th>
-                        <th>Ubah</th>
-                        <!-- <th>Hapus</th> -->
+                        <th>Nomer</th>
+            						<th>No. Medrek</th>
+            						<th>Nama Pasien</th>
+            						<th>DPJP</th>
+            						<th>Diagnosa Utama</th>
+            						<th>Biaya Klaim</th>
+                        <th>Aksi</th>
                       </tr>
                     </thead>
                     <tbody>
                       <?php
-                      $num =1;
-                        while($data = mysql_fetch_assoc($result)){
+                      $nomor = 0;
+                      if(mysql_num_rows($get_data)>0){
+                        while($rekap = mysql_fetch_assoc($get_data)){
                           echo "<tr>
-                                  <td>".$num."</td>
-                                  <td>".$data['nama_penilaian']."</td>
-																	<td>
-                                    <a href=\"list_periksa_up.php?f=".$data['id_penilaian']."\" class=\"btn btn-sm btn-warning\"><i class=\"fa fa-pencil\"></i> Ubah</a>
-                                  </td>";
-                                  // <td>
-                                  //   <a href=\"list_periksa_del.php?f=".$data['id_penilaian']."\" class=\"btn btn-sm btn-danger\"><i class=\"fa fa-trash\"></i> Hapus</a>
-                                  // </td>
-                            echo "</tr>";
-                            $num++;
+                                  <td>".++$nomor."</td>
+                                  <td>".$rekap['nomedrek']."</td>
+                                  <td>".$rekap['nama_pasien']."</td>
+                                  <td>".$rekap['nama_dokter']."</td>
+                                  <td>".$rekap['diagnosaU']."</td>
+                                  <td>Rp ".number_format($rekap['biaya_klaim'],2,',','.')."</td>
+                                  <td>
+                                    <a href='rekap_sc_edit.php?i=".$rekap['id_asesmen']."&task=edit' class='btn btn-sm btn-warning' role='button'><i class='fa fa-pencil'></i> Edit</a>
+                                    <a href='rekap_sc_detail.php?i=".$rekap['id_asesmen']."&task=detail' class='btn btn-sm btn-info' role='button'><i class='fa fa-pencil'></i> Detail</a>
+                                  </td>
+                                </tr>";
                         }
+                      }
                       ?>
                     </tbody>
                   </table>
                 </div><!-- /.box-body -->
-                <!-- <div class="box-footer">
-                    <button id="open_form" type="button" name="tambah_data" class="btn btn-primary"><i class="fa fa-plus-circle"></i> Tambah Data</button>
-                </div> -->
               </div><!-- /.box -->
             </div><!-- /.col -->
           </div><!-- /.row -->
@@ -176,7 +127,7 @@ $result = mysql_query($get_data_form);
         <div class="pull-right hidden-xs">
           <b>Version</b> 0.2 build Juni
         </div>
-        <strong>Copyright &copy; 2016-<?php echo date('Y'); ?> <a href="http://rskiakotabandung.com">Divisi IT RSKIA Kota Bandung</a>.</strong> All rights reserved.
+        <strong>Copyright &copy; 2016 <a href="http://rskiakotabandung.com">Divisi IT RSKIA Kota Bandung</a>.</strong> All rights reserved.
       </footer><!-- /.static footer -->
     </div><!-- ./wrapper -->
 
@@ -204,12 +155,6 @@ $result = mysql_query($get_data_form);
           "bSort": true,
           "bInfo": true,
           "bAutoWidth": false
-        });
-        $("#open_form").click(function(){
-          $('#new_form').fadeIn( "slow" );
-        });
-        $("#close_form").click(function(){
-          $('#new_form').fadeOut( "slow" );
         });
       });
     </script>

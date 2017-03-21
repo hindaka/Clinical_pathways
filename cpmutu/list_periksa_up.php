@@ -67,11 +67,11 @@ $data_penilaian = mysql_fetch_array($result);
         <section class="content-header">
           <h1>
             Pengaturan
-            <small>Daftar Pemeriksaan</small>
+            <small>Daftar Indikator</small>
           </h1>
           <ol class="breadcrumb">
             <li><a href="index.php"><i class="fa fa-dashboard"></i> Home</a></li>
-            <li class="active">Pengaturan Daftar Pemeriksaan</li>
+            <li class="active">Pengaturan Daftar Indikator</li>
           </ol>
         </section>
 
@@ -84,11 +84,11 @@ $data_penilaian = mysql_fetch_array($result);
               <div class="box box-primary">
                 <div class="box-header">
                   <i class="fa fa-envelope"></i>
-                  <h3 class="box-title">Ubah Data Pemeriksaan</h3>
+                  <h3 class="box-title">Ubah Data Indikator</h3>
                 </div>
                 <div class="box-body">
                   <div class="form-group">
-                    <label for="nama_form">Pemeriksaan</label>
+                    <label for="nama_form">Indikator</label>
                     <input type="hidden" name="id" value="<?php echo $id; ?>">
                     <input type="text" class="form-control" id="nama_periksa" name="nama_periksa" placeholder="contoh : Asesmen Awal Medis Rawat Inap" value="<?php echo $data_penilaian['nama_penilaian']; ?>" required>
                   </div>
